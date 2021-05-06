@@ -29,12 +29,6 @@ class Database extends sqlite3.Database {
         });
     }
 
-    serializeAsync() {
-        return new Promise((resolve, reject) => {
-            this.serialize(() => resolve());
-        });
-    }
-
     closeAsync() {
         return new Promise((resolve, reject) => {
             this.close((err) => {
