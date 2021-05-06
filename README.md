@@ -24,6 +24,7 @@ through a specific endpoint.
 3. Make a GET request to `/:urn/properties[?q=<query>]` to query the property database
   - If the _q_ parameter is not provided, a default SQL query is used, listing properties of all objects
   - You can access the following tables in the query: `objects_attrs`, `objects_avs`, `objects_ids`, and `objects_vals`
+  - The database also provides a view called `properties` that combines all the tables and exposes all public properties
 
 Here's some query examples:
 
@@ -39,6 +40,12 @@ Here's some query examples:
     ORDER BY dbid
 ```
 
+Or
+
+```sql
+    SELECT * FROM properties ORDER BY dbid
+```
+
 ### Get all properties in the "Construction" category
 
 ```sql
@@ -48,7 +55,12 @@ Here's some query examples:
     LEFT JOIN objects_attrs attrs ON attrs.attr_id = avs.attr_id
     LEFT JOIN objects_vals vals on vals.val_id = avs.val_id
     WHERE prop_category = 'Construction'
-    ORDER BY dbid
+```
+
+Or
+
+```sql
+    SELECT * FROM properties WHERE prop_category = 'Construction'
 ```
 
 ### Get the dbIDs of all children of dbID 123
@@ -65,10 +77,16 @@ Here's some query examples:
 ### Get the sum of all "Area" property values
 
 ```sql
-    SELECT SUM(vals.value)
+    SELECT SUM(vals.value) AS total_area
     FROM objects_avs avs
     LEFT JOIN objects_ids ids ON ids.ent_id = avs.ent_id
     LEFT JOIN objects_attrs attrs ON attrs.attr_id = avs.attr_id
     LEFT JOIN objects_vals vals on vals.val_id = avs.val_id
     WHERE attrs.name = 'Area'
+```
+
+Or
+
+```sql
+    SELECT SUM(prop_value) AS total_area FROM properties WHERE prop_name = 'Area'
 ```
