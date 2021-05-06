@@ -2,6 +2,10 @@
 
 Simple Node.js microservice allowing custom sqlite queries over the property database of Autodesk Forge models.
 
+The service downloads _objects\_*.json.gz_ files (see https://github.com/wallabyway/propertyServer/blob/master/pipeline.md#property-pipeline
+to learn more about those) of the input Forge model and converts them into a local sqlite file. The sqlite database can then queried
+through a specific endpoint.
+
 ## Usage
 
 - Install npm dependencies: `npm install`
