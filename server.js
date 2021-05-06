@@ -24,6 +24,7 @@ function updateMetadata(urn, callback) {
         metadata = fs.readJsonSync(metadataPath);
     }
     callback(metadata);
+    console.log(metadata);
     fs.ensureDirSync(path.dirname(metadataPath));
     fs.writeJsonSync(metadataPath, metadata);
 }
