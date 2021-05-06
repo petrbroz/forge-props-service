@@ -5,7 +5,7 @@ const { ModelDerivativeClient, ManifestHelper } = require('forge-server-utils');
 const { SvfReader } = require('forge-convert-utils');
 const { Database } = require('./sqlite');
 
-const PORT = env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 const CACHE_FOLDER = path.join(__dirname, 'cache');
 const DEFAULT_QUERY = `
     SELECT ids.ent_id AS dbid, attrs.category AS prop_category, attrs.name AS prop_name, vals.value AS prop_value
