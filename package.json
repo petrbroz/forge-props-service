@@ -1,0 +1,17 @@
+{
+  "name": "forge-props-service",
+  "version": "0.0.1",
+  "description": "Simple Node.js microservice allowing custom sqlite queries over the property database of Autodesk Forge models.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Petr Broz <petr.broz@autodesk.com>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "forge-convert-utils": "^3.6.0",
+    "forge-server-utils": "^8.3.2",
+    "fs-extra": "^10.0.0",
+    "sqlite3": "^5.0.2"
+  }
+}
