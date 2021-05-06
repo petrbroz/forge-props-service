@@ -83,6 +83,8 @@ async function preparePropertyDB(urn, token) {
             const query = 'INSERT INTO objects_avs VALUES ' + Array(page.length / 2).fill(`(${i}, ?, ?)`).join(',');
             await db.runAsync(query, page);
         }
+
+        await db.runAsync('CREATE VIEW properties AS ' + DEFAULT_QUERY);
         await db.closeAsync();
     } catch (err) {
         updateMetadata(urn, m => { m.status = 'failed'; m.logs.push('Could not create sqlite.'); m.error = err; });
