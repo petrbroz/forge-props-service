@@ -6,6 +6,7 @@ class Database extends sqlite3.Database {
     }
 
     runAsync(query, params = []) {
+        console.log('Running query', query);
         return new Promise((resolve, reject) => {
             this.run(query, params, (err, res) => {
                 if (err) {
@@ -18,6 +19,7 @@ class Database extends sqlite3.Database {
     }
 
     allAsync(query, params = []) {
+        console.log('Running query', query);
         return new Promise((resolve, reject) => {
             this.all(query, params, (err, rows) => {
                 if (err) {
