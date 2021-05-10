@@ -3,7 +3,7 @@ const fs = require('fs-extra');
 const express = require('express');
 const { ModelDerivativeClient, ManifestHelper } = require('forge-server-utils');
 const { SvfReader } = require('forge-convert-utils');
-const { Database } = require('./sqlite');
+const { Database, Mode } = require('./sqlite');
 
 const PORT = process.env.PORT || 3000;
 const CACHE_FOLDER = path.join(__dirname, 'cache');
@@ -51,7 +51,7 @@ async function preparePropertyDB(urn, token) {
         const attrs = pdb._attrs;
         const vals = pdb._vals;
 
-        const db = new Database(path.join(CACHE_FOLDER, urn, 'properties.sqlite'));
+        const db = new Database(path.join(CACHE_FOLDER, urn, 'properties.sqlite'), Mode.READWRITE);
         await db.runAsync('CREATE TABLE objects_avs (ent_id INTEGER, attr_id INTEGER, val_id INTEGER)');
         await db.runAsync('CREATE TABLE objects_ids (ent_id INTEGER PRIMARY KEY, external_id TEXT)');
         await db.runAsync('CREATE TABLE objects_attrs (attr_id INTEGER PRIMARY KEY, name TEXT, category TEXT)');
@@ -94,7 +94,7 @@ async function preparePropertyDB(urn, token) {
 }
 
 async function queryPropertyDB(urn, query) {
-    const db = new Database(path.join(__dirname, 'cache', urn, 'properties.sqlite'));
+    const db = new Database(path.join(__dirname, 'cache', urn, 'properties.sqlite'), Mode.READONLY);
     const rows = await db.allAsync(query);
     await db.closeAsync();
     return rows;
