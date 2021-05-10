@@ -1,8 +1,7 @@
 const path = require('path');
 const fs = require('fs-extra');
 const express = require('express');
-const { ModelDerivativeClient, ManifestHelper } = require('forge-server-utils');
-const { SvfReader } = require('forge-convert-utils');
+const { checkAccess, downloadProperties } = require('./forge');
 const { createDatabase, queryDatabase, DEFAULT_QUERY } = require('./database');
 
 const PORT = process.env.PORT || 3000;
@@ -17,23 +16,6 @@ function updateMetadata(urn, callback) {
     callback(metadata);
     fs.ensureDirSync(path.dirname(metadataPath));
     fs.writeJsonSync(metadataPath, metadata);
-}
-
-async function checkAccess(urn, token) {
-    const client = new ModelDerivativeClient({ token });
-    await client.getManifest(urn);
-}
-
-async function downloadPropertyDB(urn, token) {
-    const modelDerivativeClient = new ModelDerivativeClient({ token });
-    const helper = new ManifestHelper(await modelDerivativeClient.getManifest(urn));
-    const viewables = helper.search({ type: 'resource', role: 'graphics' }).filter(d => d.mime === 'application/autodesk-svf');
-    if (viewables.length === 0) {
-        throw new Error('No viewables found.');
-    }
-    const svf = await SvfReader.FromDerivativeService(urn, viewables[0].guid, { token });
-    const pdb = await svf.getPropertyDb();
-    return pdb;
 }
 
 const app = express();
@@ -54,7 +36,7 @@ app.use('/:urn', async function (req, res, next) {
 app.post('/:urn', function (req, res) {
     const { urn, token } = req;
     updateMetadata(urn, m => { m.status = 'running'; m.logs = ['Downloading property database.']; });
-    downloadPropertyDB(urn, token)
+    downloadProperties(urn, token)
         .then(pdb => {
             updateMetadata(urn, m => { m.logs.push('Creating local sqlite database.'); });
             createDatabase(path.join(CACHE_FOLDER, urn, 'properties.sqlite'), pdb);
