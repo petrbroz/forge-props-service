@@ -52,6 +52,8 @@ async function preparePropertyDB(urn, token) {
         const vals = pdb._vals;
 
         const db = new Database(path.join(CACHE_FOLDER, urn, 'properties.sqlite'), Mode.READWRITE);
+        await db.runAsync('PRAGMA journal_mode = off;');
+        await db.runAsync('PRAGMA synchronous = off;');
         await db.runAsync('CREATE TABLE objects_avs (ent_id INTEGER, attr_id INTEGER, val_id INTEGER)');
         await db.runAsync('CREATE TABLE objects_ids (ent_id INTEGER PRIMARY KEY, external_id TEXT)');
         await db.runAsync('CREATE TABLE objects_attrs (attr_id INTEGER PRIMARY KEY, name TEXT, category TEXT)');
