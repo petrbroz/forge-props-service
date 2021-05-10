@@ -8,6 +8,8 @@ through a specific endpoint.
 
 ## Usage
 
+### Server
+
 - Install npm dependencies: `npm install`
 - Start the server: `npm start`
 
@@ -26,9 +28,24 @@ through a specific endpoint.
   - You can access the following tables in the query: `objects_attrs`, `objects_avs`, `objects_ids`, and `objects_vals`
   - The database also provides a view called `properties` that combines all the tables and exposes all public properties
 
-Here's some query examples:
+### Command line
 
-### Get all public properties
+You can also generate the property database locally via scripts in the _bin_ folder.
+
+- Install npm dependencies: `npm install`
+- Run the _convert-local.js_ script to process a property database stored on a local filesystem:
+
+`convert-local.js <path to folder with input *.json.gz files> <path to output sqlite file>`
+
+- Or, run the _convert-forge.js_ script to process a property database of a model in Forge
+(in this case you'll need to provide `FORGE_CLIENT_ID` and `FORGE_CLIENT_SECRET` env. variables
+or a `FORGE_ACCESS_TOKEN` env. variable with a ready-to-use token):
+
+`FORGE_CLIENT_ID=<client id> FORGE_CLIENT_SECRET=<client secret> convert-forge.js <input model URN> <path to output sqlite file>`
+
+### Example queries
+
+#### Get all public properties
 
 ```sql
     SELECT ids.ent_id AS dbid, attrs.category AS prop_category, attrs.name AS prop_name, vals.value AS prop_value
@@ -40,13 +57,13 @@ Here's some query examples:
     ORDER BY dbid
 ```
 
-Or
+Or using the pre-defined `properties` view:
 
 ```sql
     SELECT * FROM properties ORDER BY dbid
 ```
 
-### Get all properties in the "Construction" category
+#### Get all properties in the "Construction" category
 
 ```sql
     SELECT ids.ent_id AS dbid, attrs.category AS prop_category, attrs.name AS prop_name, vals.value AS prop_value
@@ -57,13 +74,13 @@ Or
     WHERE prop_category = 'Construction'
 ```
 
-Or
+Or using the pre-defined `properties` view:
 
 ```sql
     SELECT * FROM properties WHERE prop_category = 'Construction'
 ```
 
-### Get the dbIDs of all children of dbID 123
+#### Get the dbIDs of all children of dbID 123
 
 ```sql
     SELECT ids.ent_id AS dbid, vals.value AS child_id
@@ -74,7 +91,7 @@ Or
     WHERE dbid = 123 AND attrs.category = '__child__'
 ```
 
-### Get the sum of all "Area" property values
+#### Get the sum of all "Area" property values
 
 ```sql
     SELECT SUM(vals.value) AS total_area
@@ -85,7 +102,7 @@ Or
     WHERE attrs.name = 'Area'
 ```
 
-Or
+Or using the pre-defined `properties` view:
 
 ```sql
     SELECT SUM(prop_value) AS total_area FROM properties WHERE prop_name = 'Area'
