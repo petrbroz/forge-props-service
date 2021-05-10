@@ -1,4 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
+const debug = require('debug')('sqlite');
 
 const PAGE_SIZE = 1000;
 const DEFAULT_QUERY = `
@@ -12,19 +13,19 @@ const DEFAULT_QUERY = `
 `;
 
 function createDatabase(filepath, pdb) {
-    console.log('Creating database...');
+    debug('Creating database');
     const db = new sqlite3.Database(filepath);
     db.serialize(function () {
         db.run('PRAGMA journal_mode = off;');
         db.run('PRAGMA synchronous = off;');
 
-        console.log('Creating tables...');
+        debug('Creating tables');
         db.run('CREATE TABLE objects_avs (ent_id INTEGER, attr_id INTEGER, val_id INTEGER);');
         db.run('CREATE TABLE objects_ids (ent_id INTEGER PRIMARY KEY, external_id TEXT);');
         db.run('CREATE TABLE objects_attrs (attr_id INTEGER PRIMARY KEY, name TEXT, category TEXT);');
         db.run('CREATE TABLE objects_vals (val_id INTEGER PRIMARY KEY, value TEXT);');
 
-        console.log('Inserting objects_ids...');
+        debug('Inserting objects_ids');
         for (let i = 1, len = pdb._ids.length; i < len; i += PAGE_SIZE) {
             const page = pdb._ids.slice(i, Math.min(i + PAGE_SIZE, len));
             const query = `INSERT INTO objects_ids VALUES ${page.map(_ => '(?, ?)').join(',')};`;
@@ -32,7 +33,7 @@ function createDatabase(filepath, pdb) {
             db.run(query, params);
         }
 
-        console.log('Inserting objects_attrs...');
+        debug('Inserting objects_attrs');
         for (let i = 1, len = pdb._attrs.length; i < len; i += PAGE_SIZE) {
             const page = pdb._attrs.slice(i, Math.min(i + PAGE_SIZE, len));
             const query = `INSERT INTO objects_attrs VALUES ${page.map(_ => '(?, ?, ?)').join(',')};`;
@@ -40,7 +41,7 @@ function createDatabase(filepath, pdb) {
             db.run(query, params);
         }
 
-        console.log('Inserting objects_vals...');
+        debug('Inserting objects_vals');
         for (let i = 1, len = pdb._vals.length; i < len; i += PAGE_SIZE) {
             const page = pdb._vals.slice(i, Math.min(i + PAGE_SIZE, len));
             const query = `INSERT INTO objects_vals VALUES ${page.map(_ => '(?, ?)').join(',')};`;
@@ -48,7 +49,7 @@ function createDatabase(filepath, pdb) {
             db.run(query, params);
         }
 
-        console.log('Inserting objects_avs...');
+        debug('Inserting objects_avs');
         for (let i = 1, len = pdb._offsets.length; i < len; i++) {
             const page = pdb._avs.slice(pdb._offsets[i] * 2, i < len - 1 ? pdb._offsets[i + 1] * 2 : pdb._avs.length);
             if (page.length === 0) {
@@ -58,10 +59,10 @@ function createDatabase(filepath, pdb) {
             db.run(query, page);
         }
 
-        console.log('Creating views...');
+        debug('Creating views');
         db.run(`CREATE VIEW properties AS ${DEFAULT_QUERY};`);
 
-        console.log('Creating indices...');
+        debug('Creating indices');
         db.run('CREATE INDEX idx_external_id ON objects_ids (external_id);');
         db.run('CREATE INDEX idx_attr_category ON objects_attrs (category);');
         db.run('CREATE INDEX idx_attr_name ON objects_attrs (name);');
@@ -70,7 +71,7 @@ function createDatabase(filepath, pdb) {
         db.run('CREATE INDEX idx_attr_id_val_id ON objects_avs (attr_id, val_id);');
     });
     db.close();
-    console.log('Database ready...');
+    debug('Database ready');
 }
 
 function queryDatabase(filepath, query, params = []) {

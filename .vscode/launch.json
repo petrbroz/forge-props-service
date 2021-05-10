@@ -7,11 +7,27 @@
         {
             "type": "pwa-node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Launch Server",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/server.js"
+            "program": "${workspaceFolder}/server.js",
+            "env": {
+                "DEBUG": "*"
+            }
+        },
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Launch Local Convert",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/bin/convert-local.js",
+            "args": ["<input folder>", "<output sqlite file>"],
+            "env": {
+                "DEBUG": "*"
+            }
         }
     ]
 }

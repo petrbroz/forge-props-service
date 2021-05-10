@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs-extra');
+const debug = require('debug')('server');
 const express = require('express');
 const { checkAccess, downloadProperties } = require('./forge');
 const { createDatabase, queryDatabase, DEFAULT_QUERY } = require('./database');
@@ -35,6 +36,7 @@ app.use('/:urn', async function (req, res, next) {
 
 app.post('/:urn', function (req, res) {
     const { urn, token } = req;
+    debug('Processing %s', urn);
     updateMetadata(urn, m => { m.status = 'running'; m.logs = ['Downloading property database.']; });
     downloadProperties(urn, token)
         .then(pdb => {
