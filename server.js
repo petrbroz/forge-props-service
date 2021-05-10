@@ -51,14 +51,14 @@ async function preparePropertyDB(urn, token) {
         const attrs = pdb._attrs;
         const vals = pdb._vals;
 
-        const db = new Database(path.join(CACHE_FOLDER, urn, 'properties.sqlite'), Mode.READWRITE);
+        const db = new Database(path.join(CACHE_FOLDER, urn, 'properties.sqlite'));
         await db.runAsync('PRAGMA journal_mode = off;');
         await db.runAsync('PRAGMA synchronous = off;');
         await db.runAsync('CREATE TABLE objects_avs (ent_id INTEGER, attr_id INTEGER, val_id INTEGER)');
         await db.runAsync('CREATE TABLE objects_ids (ent_id INTEGER PRIMARY KEY, external_id TEXT)');
         await db.runAsync('CREATE TABLE objects_attrs (attr_id INTEGER PRIMARY KEY, name TEXT, category TEXT)');
         await db.runAsync('CREATE TABLE objects_vals (val_id INTEGER PRIMARY KEY, value TEXT)');
-    
+
         for (let i = 1, len = ids.length; i < len; i += 100) {
             const page = ids.slice(i, Math.min(i + 100, len));
             const query = 'INSERT INTO objects_ids VALUES ' + page.map(_ => '(?, ?)').join(',');
@@ -86,7 +86,17 @@ async function preparePropertyDB(urn, token) {
             await db.runAsync(query, page);
         }
 
+        // Create a view combining all tables into (dbid, prop_category, prop_name, prop_value) rows
         await db.runAsync('CREATE VIEW properties AS ' + DEFAULT_QUERY);
+
+        // Create indices for common types of queries
+        await db.runAsync('CREATE INDEX idx_external_id ON objects_ids (external_id);');
+        await db.runAsync('CREATE INDEX idx_attr_category ON objects_attrs (category);');
+        await db.runAsync('CREATE INDEX idx_attr_name ON objects_attrs (name);');
+        await db.runAsync('CREATE INDEX idx_attr_value ON objects_vals (value);');
+        await db.runAsync('CREATE INDEX idx_dbid ON objects_avs (ent_id);');
+        await db.runAsync('CREATE INDEX idx_attr_id_val_id ON objects_avs (attr_id, val_id);');
+
         await db.closeAsync();
     } catch (err) {
         updateMetadata(urn, m => { m.status = 'failed'; m.logs.push('Could not create sqlite.'); m.error = err; });
