@@ -14,7 +14,8 @@ async function convert(urn, outputFile) {
         token = FORGE_ACCESS_TOKEN;
     } else if (FORGE_CLIENT_ID && FORGE_CLIENT_SECRET) {
         const client = new AuthenticationClient(FORGE_CLIENT_ID, FORGE_CLIENT_SECRET);
-        token = await client.authenticate(['viewables:read']).access_token;
+        const auth = await client.authenticate(['viewables:read']);
+        token = auth.access_token;
     } else {
         throw new Error('Missing authentication. Provide FORGE_CLIENT_ID and FORGE_CLIENT_SECRET env. vars, or FORGE_ACCESS_TOKEN.');
     }
