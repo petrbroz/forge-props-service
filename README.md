@@ -48,11 +48,11 @@ or a `FORGE_ACCESS_TOKEN` env. variable with a ready-to-use token):
 #### Get all public properties
 
 ```sql
-    SELECT ids.ent_id AS dbid, attrs.category AS prop_category, attrs.name AS prop_name, vals.value AS prop_value
-    FROM objects_avs avs
-    LEFT JOIN objects_ids ids ON ids.ent_id = avs.ent_id
-    LEFT JOIN objects_attrs attrs ON attrs.attr_id = avs.attr_id
-    LEFT JOIN objects_vals vals on vals.val_id = avs.val_id
+    SELECT ids.id AS dbid, attrs.category AS prop_category, attrs.name AS prop_name, vals.value AS prop_value
+    FROM _objects_eav eav
+    LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
+    LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
+    LEFT JOIN _objects_val vals on vals.id = eav.value_id
     WHERE prop_category NOT LIKE '\_\_%\_\_' ESCAPE '\' /* skip internal properties */
     ORDER BY dbid
 ```
@@ -66,11 +66,11 @@ Or using the pre-defined `properties` view:
 #### Get all properties in the "Construction" category
 
 ```sql
-    SELECT ids.ent_id AS dbid, attrs.category AS prop_category, attrs.name AS prop_name, vals.value AS prop_value
-    FROM objects_avs avs
-    LEFT JOIN objects_ids ids ON ids.ent_id = avs.ent_id
-    LEFT JOIN objects_attrs attrs ON attrs.attr_id = avs.attr_id
-    LEFT JOIN objects_vals vals on vals.val_id = avs.val_id
+    SELECT ids.id AS dbid, attrs.category AS prop_category, attrs.name AS prop_name, vals.value AS prop_value
+    FROM _objects_eav eav
+    LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
+    LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
+    LEFT JOIN _objects_val vals on vals.id = eav.value_id
     WHERE prop_category = 'Construction'
 ```
 
@@ -83,11 +83,11 @@ Or using the pre-defined `properties` view:
 #### Get the dbIDs of all children of dbID 123
 
 ```sql
-    SELECT ids.ent_id AS dbid, vals.value AS child_id
-    FROM objects_avs avs
-    LEFT JOIN objects_ids ids ON ids.ent_id = avs.ent_id
-    LEFT JOIN objects_attrs attrs ON attrs.attr_id = avs.attr_id
-    LEFT JOIN objects_vals vals on vals.val_id = avs.val_id
+    SELECT ids.id AS dbid, vals.value AS child_id
+    FROM _objects_eav eav
+    LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
+    LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
+    LEFT JOIN _objects_val vals on vals.id = eav.value_id
     WHERE dbid = 123 AND attrs.category = '__child__'
 ```
 
@@ -95,10 +95,10 @@ Or using the pre-defined `properties` view:
 
 ```sql
     SELECT SUM(vals.value) AS total_area
-    FROM objects_avs avs
-    LEFT JOIN objects_ids ids ON ids.ent_id = avs.ent_id
-    LEFT JOIN objects_attrs attrs ON attrs.attr_id = avs.attr_id
-    LEFT JOIN objects_vals vals on vals.val_id = avs.val_id
+    FROM _objects_eav eav
+    LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
+    LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
+    LEFT JOIN _objects_val vals on vals.id = eav.value_id
     WHERE attrs.name = 'Area'
 ```
 
