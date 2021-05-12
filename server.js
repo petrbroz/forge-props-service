@@ -4,6 +4,7 @@ const debug = require('debug')('server');
 const express = require('express');
 const { checkAccess, downloadProperties } = require('./forge');
 const { createDatabase, queryDatabase, DEFAULT_QUERY } = require('./database');
+debug.log = console.log.bind(console);
 
 const PORT = process.env.PORT || 3000;
 const CACHE_FOLDER = path.join(__dirname, 'cache');

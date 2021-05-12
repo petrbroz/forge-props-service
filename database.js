@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const debug = require('debug')('sqlite');
+debug.log = console.log.bind(console);
 
 const PAGE_SIZE = 1000;
 const DEFAULT_QUERY = `
@@ -20,16 +21,16 @@ function createDatabase(filepath, pdb) {
         db.run('PRAGMA synchronous = off;');
 
         debug('Creating tables');
-        db.run('CREATE TABLE _objects_eav (entity_id INTEGER, attribute_id INTEGER, value_id INTEGER);');
-        db.run('CREATE TABLE _objects_id (id INTEGER PRIMARY KEY, external_id TEXT);');
+        db.run('CREATE TABLE _objects_eav (id INTEGER PRIMARY KEY, entity_id INTEGER, attribute_id INTEGER, value_id INTEGER);');
+        db.run('CREATE TABLE _objects_id (id INTEGER PRIMARY KEY, external_id BLOB, viewable_id BLOB);');
         db.run('CREATE TABLE _objects_attr (id INTEGER PRIMARY KEY, name TEXT, category TEXT, data_type INTEGER, data_type_context TEXT, description TEXT, display_name TEXT, flags INTEGER, display_precision INTEGER);');
-        db.run('CREATE TABLE _objects_val (id INTEGER PRIMARY KEY, value TEXT);');
+        db.run('CREATE TABLE _objects_val (id INTEGER PRIMARY KEY, value BLOB);');
 
         debug('Inserting _objects_id');
         for (let i = 1, len = pdb._ids.length; i < len; i += PAGE_SIZE) {
             const page = pdb._ids.slice(i, Math.min(i + PAGE_SIZE, len));
-            const query = `INSERT INTO _objects_id VALUES ${page.map(_ => '(?, ?)').join(',')};`;
-            const params = page.reduce((prev, curr, index) => { prev.push(i + index, curr); return prev; }, []);
+            const query = `INSERT INTO _objects_id VALUES ${page.map(_ => '(?, ?, ?)').join(',')};`;
+            const params = page.reduce((prev, curr, index) => { prev.push(i + index, curr, null); return prev; }, []);
             db.run(query, params);
         }
 
@@ -52,12 +53,17 @@ function createDatabase(filepath, pdb) {
         }
 
         debug('Inserting _objects_eav');
+        let eavIdx = 1;
         for (let i = 1, len = pdb._offsets.length; i < len; i++) {
             const page = pdb._avs.slice(pdb._offsets[i] * 2, i < len - 1 ? pdb._offsets[i + 1] * 2 : pdb._avs.length);
             if (page.length === 0) {
                 continue;
             }
-            const query = `INSERT INTO _objects_eav VALUES ${Array(page.length / 2).fill(`(${i}, ?, ?)`).join(',')};`;
+            const values = [];
+            for (let j = 0; j < page.length / 2; j++) {
+                values.push(`(${eavIdx++}, ${i}, ?, ?)`);
+            }
+            const query = `INSERT INTO _objects_eav VALUES ${values.join(',')};`;
             db.run(query, page);
         }
 
@@ -68,6 +74,7 @@ function createDatabase(filepath, pdb) {
         db.run('CREATE INDEX idx_external_id ON _objects_id (external_id);');
         db.run('CREATE INDEX idx_attr_category ON _objects_attr (category);');
         db.run('CREATE INDEX idx_attr_name ON _objects_attr (name);');
+        db.run('CREATE INDEX idx_attr_display_name ON _objects_attr (display_name);');
         db.run('CREATE INDEX idx_attr_value ON _objects_val (value);');
         db.run('CREATE INDEX idx_dbid ON _objects_eav (entity_id);');
         db.run('CREATE INDEX idx_attribute_id_value_id ON _objects_eav (attribute_id, value_id);');
