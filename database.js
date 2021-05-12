@@ -3,12 +3,12 @@ const debug = require('debug')('sqlite');
 
 const PAGE_SIZE = 1000;
 const DEFAULT_QUERY = `
-    SELECT ids.id AS dbid, attrs.category AS prop_category, attrs.name AS prop_name, vals.value AS prop_value
-    FROM _objects_eav avs
-    LEFT JOIN _objects_id ids ON ids.id = avs.entity_id
-    LEFT JOIN _objects_attr attrs ON attrs.id = avs.attribute_id
-    LEFT JOIN _objects_val vals ON vals.id = avs.value_id
-    WHERE prop_category NOT LIKE '\\_\\_%\\_\\_' ESCAPE '\\'
+    SELECT ids.id AS dbid, attrs.category AS category, IFNULL(attrs.display_name, attrs.name) AS name, vals.value AS value
+    FROM _objects_eav eav
+    LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
+    LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
+    LEFT JOIN _objects_val vals ON vals.id = eav.value_id
+    WHERE category NOT LIKE '\\_\\_%\\_\\_' ESCAPE '\\'
     ORDER BY dbid
 `;
 
@@ -22,7 +22,7 @@ function createDatabase(filepath, pdb) {
         debug('Creating tables');
         db.run('CREATE TABLE _objects_eav (entity_id INTEGER, attribute_id INTEGER, value_id INTEGER);');
         db.run('CREATE TABLE _objects_id (id INTEGER PRIMARY KEY, external_id TEXT);');
-        db.run('CREATE TABLE _objects_attr (id INTEGER PRIMARY KEY, name TEXT, category TEXT);');
+        db.run('CREATE TABLE _objects_attr (id INTEGER PRIMARY KEY, name TEXT, category TEXT, data_type INTEGER, data_type_context TEXT, description TEXT, display_name TEXT, flags INTEGER, display_precision INTEGER);');
         db.run('CREATE TABLE _objects_val (id INTEGER PRIMARY KEY, value TEXT);');
 
         debug('Inserting _objects_id');
@@ -36,8 +36,10 @@ function createDatabase(filepath, pdb) {
         debug('Inserting _objects_attr');
         for (let i = 1, len = pdb._attrs.length; i < len; i += PAGE_SIZE) {
             const page = pdb._attrs.slice(i, Math.min(i + PAGE_SIZE, len));
-            const query = `INSERT INTO _objects_attr VALUES ${page.map(_ => '(?, ?, ?)').join(',')};`;
-            const params = page.reduce((prev, curr, index) => { prev.push(i + index, curr[0], curr[1]); return prev; }, []);
+            const query = `INSERT INTO _objects_attr VALUES ${page.map(_ => '(?, ?, ?, ?, ?, ?, ?, ?, ?)').join(',')};`;
+            const params = page.reduce((prev, curr, index) => {
+                prev.push(i + index, curr[0], curr[1], curr[2], curr[3], curr[4], curr[5], curr[6], curr[7]); return prev;
+            }, []);
             db.run(query, params);
         }
 
