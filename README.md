@@ -63,7 +63,7 @@ convert-forge.js <input model URN> <path to output sqlite file>
 ### Get all public properties
 
 ```sql
-    SELECT ids.id AS dbid, attrs.category AS category, IFNULL(attrs.display_name, attrs.name) AS name, vals.value AS value
+    SELECT ids.id AS dbid, attrs.category AS category, COALESCE(NULLIF(attrs.display_name, ''), attrs.name) AS name, vals.value AS value
     FROM _objects_eav eav
     LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
     LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
@@ -81,7 +81,7 @@ Or using the pre-defined `properties` view:
 ### Get all properties in the "Construction" category
 
 ```sql
-    SELECT ids.id AS dbid, attrs.category AS category, IFNULL(attrs.display_name, attrs.name) AS name, vals.value AS value
+    SELECT ids.id AS dbid, attrs.category AS category, COALESCE(NULLIF(attrs.display_name, ''), attrs.name) AS name, vals.value AS value
     FROM _objects_eav eav
     LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
     LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
@@ -114,7 +114,7 @@ Or using the pre-defined `properties` view:
     LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
     LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
     LEFT JOIN _objects_val vals on vals.id = eav.value_id
-    WHERE IFNULL(attrs.display_name, attrs.name) = 'Volume'
+    WHERE COALESCE(NULLIF(attrs.display_name, ''), attrs.name) = 'Volume'
 ```
 
 Or using the pre-defined `properties` view:

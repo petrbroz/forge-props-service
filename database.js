@@ -3,7 +3,7 @@ const debug = require('debug')('sqlite');
 debug.log = console.log.bind(console);
 
 const DEFAULT_QUERY = `
-    SELECT ids.id AS dbid, attrs.category AS category, IFNULL(attrs.display_name, attrs.name) AS name, vals.value AS value
+    SELECT ids.id AS dbid, attrs.category AS category, COALESCE(NULLIF(attrs.display_name, ''), attrs.name) AS name, vals.value AS value
     FROM _objects_eav eav
     LEFT JOIN _objects_id ids ON ids.id = eav.entity_id
     LEFT JOIN _objects_attr attrs ON attrs.id = eav.attribute_id
