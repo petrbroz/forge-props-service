@@ -26,7 +26,7 @@ async function createDatabase(filepath, pdb) {
 
     debug('Inserting _objects_id');
     let entityId = 1;
-    for (const page of pdb.ids()) {
+    for await (const page of pdb.ids()) {
         const query = `INSERT INTO _objects_id VALUES ${page.map(_ => '(?, ?, ?)').join(',')};`;
         const params = page.reduce((prev, curr) => { prev.push(entityId++, curr, null); return prev; }, []);
         await db.run(query, params);
@@ -34,7 +34,7 @@ async function createDatabase(filepath, pdb) {
 
     debug('Inserting _objects_attr');
     let attributeId = 1;
-    for (const page of pdb.attrs()) {
+    for await (const page of pdb.attrs()) {
         const query = `INSERT INTO _objects_attr VALUES ${page.map(_ => '(?, ?, ?, ?, ?, ?, ?, ?, ?)').join(',')};`;
         const params = page.reduce((prev, curr, index) => {
             prev.push(attributeId++, curr[0], curr[1], curr[2], curr[3], curr[4], curr[5], curr[6], curr[7]); return prev;
@@ -44,7 +44,7 @@ async function createDatabase(filepath, pdb) {
 
     debug('Inserting _objects_val');
     let valueId = 1;
-    for (const page of pdb.vals()) {
+    for await (const page of pdb.vals()) {
         const query = `INSERT INTO _objects_val VALUES ${page.map(_ => '(?, ?)').join(',')};`;
         const params = page.reduce((prev, curr) => { prev.push(valueId++, curr); return prev; }, []);
         await db.run(query, params);
@@ -52,7 +52,7 @@ async function createDatabase(filepath, pdb) {
 
     debug('Inserting _objects_eav');
     let eavId = 1, dbId = 0;
-    for (const page of pdb.eavs()) {
+    for await (const page of pdb.eavs()) {
         dbId++;
         if (page.length === 0) {
             continue;

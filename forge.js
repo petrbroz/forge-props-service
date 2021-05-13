@@ -1,4 +1,6 @@
 const zlib = require('zlib');
+const readline = require('readline');
+const { Readable } = require('stream');
 const debug = require('debug')('forge');
 const { ModelDerivativeClient, ManifestHelper } = require('forge-server-utils');
 const { SvfReader } = require('forge-convert-utils');
@@ -52,28 +54,83 @@ class PropertyDbReader {
         return JSON.parse(zlib.gunzipSync(buff).toString());
     }
 
-    *ids(pageSize = PAGE_SIZE) {
-        const ids = this._decompress(this._idsJsonGzip);
-        for (let i = 1, len = ids.length; i < len; i += pageSize) {
-            yield ids.slice(i, Math.min(i + pageSize, len));
-        }
+    _stream(buff) {
+        return readline.createInterface({
+            input: Readable.from(buff).pipe(zlib.createGunzip()),
+            crlfDelay: Infinity
+        });
     }
 
-    *attrs(pageSize = PAGE_SIZE) {
-        const attrs = this._decompress(this._attrsJsonGzip);
-        for (let i = 1, len = attrs.length; i < len; i += pageSize) {
-            yield attrs.slice(i, Math.min(i + pageSize, len));
+    async *ids(pageSize = PAGE_SIZE) {
+        let page = [];
+        let lineNumber = 0;
+        for await (const line of this._stream(this._idsJsonGzip)) {
+            lineNumber++;
+            if (lineNumber === 1) {
+                if (line !== '[0,') {
+                    throw new Error('Unexpected first line of .json.gz buffer.');
+                }
+                continue;
+            }
+            if (line === ']') {
+                continue;
+            }
+            page.push(JSON.parse(line.replace(/,?$/, '')));
+            if (page.length === pageSize) {
+                yield page;
+                page = [];
+            }
         }
+        yield page;
     }
 
-    *vals(pageSize = PAGE_SIZE) {
-        const vals = this._decompress(this._valsJsonGzip);
-        for (let i = 1, len = vals.length; i < len; i += pageSize) {
-            yield vals.slice(i, Math.min(i + pageSize, len));
+    async *attrs(pageSize = PAGE_SIZE) {
+        let page = [];
+        let lineNumber = 0;
+        for await (const line of this._stream(this._attrsJsonGzip)) {
+            lineNumber++;
+            if (lineNumber === 1) {
+                if (line !== '[0,') {
+                    throw new Error('Unexpected first line of .json.gz buffer.');
+                }
+                continue;
+            }
+            if (line === ']') {
+                continue;
+            }
+            page.push(JSON.parse(line.replace(/,?$/, '')));
+            if (page.length === pageSize) {
+                yield page;
+                page = [];
+            }
         }
+        yield page;
     }
 
-    *eavs() {
+    async *vals(pageSize = PAGE_SIZE) {
+        let page = [];
+        let lineNumber = 0;
+        for await (const line of this._stream(this._valsJsonGzip)) {
+            lineNumber++;
+            if (lineNumber === 1) {
+                if (line !== '[0,') {
+                    throw new Error('Unexpected first line of .json.gz buffer.');
+                }
+                continue;
+            }
+            if (line === ']') {
+                continue;
+            }
+            page.push(JSON.parse(line.replace(/,?$/, '')));
+            if (page.length === pageSize) {
+                yield page;
+                page = [];
+            }
+        }
+        yield page;
+    }
+
+    async *eavs() {
         const offs = this._decompress(this._offsJsonGzip);
         const avs = this._decompress(this._avsJsonGzip);
         for (let i = 1, len = offs.length; i < len; i++) {
