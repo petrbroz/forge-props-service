@@ -5,7 +5,7 @@ const path = require('path');
 const { PropertyDbReader } = require('../forge');
 const { createDatabase } = require('../database');
 
-function convert(inputDir, outputFile) {
+async function convert(inputDir, outputFile) {
     const read = (filename) => fs.readFileSync(path.join(inputDir, filename));
     const pdb = new PropertyDbReader(
         read('objects_ids.json.gz'),
@@ -15,12 +15,14 @@ function convert(inputDir, outputFile) {
         read('objects_vals.json.gz')
     );
     fs.ensureDirSync(path.dirname(outputFile));
-    createDatabase(outputFile, pdb);
+    await createDatabase(outputFile, pdb);
 }
 
 if (process.argv.length < 4) {
     console.log('Usage:');
     console.log('convert-local <input folder with *.json.gz files> <output sqlite filename>');
 } else {
-    convert(process.argv[2], process.argv[3]);
+    convert(process.argv[2], process.argv[3])
+        .then(() => console.log('Done!'))
+        .catch(err => console.error(err));
 }

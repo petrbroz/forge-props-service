@@ -21,7 +21,7 @@ async function convert(urn, outputFile) {
     }
     const pdb = await downloadProperties(urn, token);
     fs.ensureDirSync(path.dirname(outputFile));
-    createDatabase(outputFile, pdb);
+    await createDatabase(outputFile, pdb);
 }
 
 if (process.argv.length < 4) {

@@ -42,7 +42,9 @@ app.post('/:urn', function (req, res) {
     downloadProperties(urn, token)
         .then(pdb => {
             updateMetadata(urn, m => { m.logs.push('Creating local sqlite database.'); });
-            createDatabase(path.join(CACHE_FOLDER, urn, 'properties.sqlite'), pdb);
+            return createDatabase(path.join(CACHE_FOLDER, urn, 'properties.sqlite'), pdb);
+        })
+        .then(() => {
             updateMetadata(urn, m => { m.status = 'complete'; m.logs.push('Sqlite database ready to be queried.'); });
         })
         .catch(err => {
