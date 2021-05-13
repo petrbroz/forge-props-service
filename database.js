@@ -2,7 +2,6 @@ const sqlite3 = require('sqlite3').verbose();
 const debug = require('debug')('sqlite');
 debug.log = console.log.bind(console);
 
-const PAGE_SIZE = 1000;
 const DEFAULT_QUERY = `
     SELECT ids.id AS dbid, attrs.category AS category, IFNULL(attrs.display_name, attrs.name) AS name, vals.value AS value
     FROM _objects_eav eav
@@ -27,41 +26,41 @@ function createDatabase(filepath, pdb) {
         db.run('CREATE TABLE _objects_val (id INTEGER PRIMARY KEY, value BLOB);');
 
         debug('Inserting _objects_id');
-        for (let i = 1, len = pdb._ids.length; i < len; i += PAGE_SIZE) {
-            const page = pdb._ids.slice(i, Math.min(i + PAGE_SIZE, len));
+        let entityId = 1;
+        for (const page of pdb.ids()) {
             const query = `INSERT INTO _objects_id VALUES ${page.map(_ => '(?, ?, ?)').join(',')};`;
-            const params = page.reduce((prev, curr, index) => { prev.push(i + index, curr, null); return prev; }, []);
+            const params = page.reduce((prev, curr) => { prev.push(entityId++, curr, null); return prev; }, []);
             db.run(query, params);
         }
 
         debug('Inserting _objects_attr');
-        for (let i = 1, len = pdb._attrs.length; i < len; i += PAGE_SIZE) {
-            const page = pdb._attrs.slice(i, Math.min(i + PAGE_SIZE, len));
+        let attributeId = 1;
+        for (const page of pdb.attrs()) {
             const query = `INSERT INTO _objects_attr VALUES ${page.map(_ => '(?, ?, ?, ?, ?, ?, ?, ?, ?)').join(',')};`;
             const params = page.reduce((prev, curr, index) => {
-                prev.push(i + index, curr[0], curr[1], curr[2], curr[3], curr[4], curr[5], curr[6], curr[7]); return prev;
+                prev.push(attributeId++, curr[0], curr[1], curr[2], curr[3], curr[4], curr[5], curr[6], curr[7]); return prev;
             }, []);
             db.run(query, params);
         }
 
         debug('Inserting _objects_val');
-        for (let i = 1, len = pdb._vals.length; i < len; i += PAGE_SIZE) {
-            const page = pdb._vals.slice(i, Math.min(i + PAGE_SIZE, len));
+        let valueId = 1;
+        for (const page of pdb.vals()) {
             const query = `INSERT INTO _objects_val VALUES ${page.map(_ => '(?, ?)').join(',')};`;
-            const params = page.reduce((prev, curr, index) => { prev.push(i + index, curr); return prev; }, []);
+            const params = page.reduce((prev, curr) => { prev.push(valueId++, curr); return prev; }, []);
             db.run(query, params);
         }
 
         debug('Inserting _objects_eav');
-        let eavIdx = 1;
-        for (let i = 1, len = pdb._offsets.length; i < len; i++) {
-            const page = pdb._avs.slice(pdb._offsets[i] * 2, i < len - 1 ? pdb._offsets[i + 1] * 2 : pdb._avs.length);
+        let eavId = 1, dbId = 0;
+        for (const page of pdb.eavs()) {
+            dbId++;
             if (page.length === 0) {
                 continue;
             }
             const values = [];
-            for (let j = 0; j < page.length / 2; j++) {
-                values.push(`(${eavIdx++}, ${i}, ?, ?)`);
+            for (let i = 0; i < page.length / 2; i++) {
+                values.push(`(${eavId++}, ${dbId}, ?, ?)`);
             }
             const query = `INSERT INTO _objects_eav VALUES ${values.join(',')};`;
             db.run(query, page);

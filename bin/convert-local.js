@@ -2,18 +2,18 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const zlib = require('zlib');
+const { PropertyDbReader } = require('../forge');
 const { createDatabase } = require('../database');
 
 function convert(inputDir, outputFile) {
-    const read = (filename) => JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(inputDir, filename))).toString());
-    const pdb = {
-        _ids: read('objects_ids.json.gz'),
-        _offsets: read('objects_offs.json.gz'),
-        _avs: read('objects_avs.json.gz'),
-        _attrs: read('objects_attrs.json.gz'),
-        _vals: read('objects_vals.json.gz'),
-    };
+    const read = (filename) => fs.readFileSync(path.join(inputDir, filename));
+    const pdb = new PropertyDbReader(
+        read('objects_ids.json.gz'),
+        read('objects_offs.json.gz'),
+        read('objects_avs.json.gz'),
+        read('objects_attrs.json.gz'),
+        read('objects_vals.json.gz')
+    );
     fs.ensureDirSync(path.dirname(outputFile));
     createDatabase(outputFile, pdb);
 }
