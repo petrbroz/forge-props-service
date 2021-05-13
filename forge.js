@@ -41,35 +41,43 @@ async function downloadProperties(urn, token) {
 
 class PropertyDbReader {
     constructor(idsJsonGzip, offsJsonGzip, avsJsonGzip, attrsJsonGzip, valsJsonGzip) {
-        const read = buff => JSON.parse(zlib.gunzipSync(buff).toString());
-        this._ids = read(idsJsonGzip);
-        this._offs = read(offsJsonGzip);
-        this._avs = read(avsJsonGzip);
-        this._attrs = read(attrsJsonGzip);
-        this._vals = read(valsJsonGzip);
+        this._idsJsonGzip = idsJsonGzip;
+        this._offsJsonGzip = offsJsonGzip;
+        this._avsJsonGzip = avsJsonGzip;
+        this._attrsJsonGzip = attrsJsonGzip;
+        this._valsJsonGzip = valsJsonGzip;
+    }
+
+    _decompress(buff) {
+        return JSON.parse(zlib.gunzipSync(buff).toString());
     }
 
     *ids(pageSize = PAGE_SIZE) {
-        for (let i = 1, len = this._ids.length; i < len; i += pageSize) {
-            yield this._ids.slice(i, Math.min(i + pageSize, len));
+        const ids = this._decompress(this._idsJsonGzip);
+        for (let i = 1, len = ids.length; i < len; i += pageSize) {
+            yield ids.slice(i, Math.min(i + pageSize, len));
         }
     }
 
     *attrs(pageSize = PAGE_SIZE) {
-        for (let i = 1, len = this._attrs.length; i < len; i += pageSize) {
-            yield this._attrs.slice(i, Math.min(i + pageSize, len));
+        const attrs = this._decompress(this._attrsJsonGzip);
+        for (let i = 1, len = attrs.length; i < len; i += pageSize) {
+            yield attrs.slice(i, Math.min(i + pageSize, len));
         }
     }
 
     *vals(pageSize = PAGE_SIZE) {
-        for (let i = 1, len = this._vals.length; i < len; i += pageSize) {
-            yield this._vals.slice(i, Math.min(i + pageSize, len));
+        const vals = this._decompress(this._valsJsonGzip);
+        for (let i = 1, len = vals.length; i < len; i += pageSize) {
+            yield vals.slice(i, Math.min(i + pageSize, len));
         }
     }
 
     *eavs() {
-        for (let i = 1, len = this._offs.length; i < len; i++) {
-            yield this._avs.slice(this._offs[i] * 2, i < len - 1 ? this._offs[i + 1] * 2 : this._avs.length);
+        const offs = this._decompress(this._offsJsonGzip);
+        const avs = this._decompress(this._avsJsonGzip);
+        for (let i = 1, len = offs.length; i < len; i++) {
+            yield avs.slice(offs[i] * 2, i < len - 1 ? offs[i + 1] * 2 : avs.length);
         }
     }
 }
